@@ -333,9 +333,21 @@ public class Signup extends javax.swing.JFrame {
             java.util.Arrays.fill(passwordChars, '0');
             return;
         }
+        // Password complexity: At least one digit
+        if (!passwordText.matches(".*\\d.*")) {
+            JOptionPane.showMessageDialog(this, "Password must contain at least one digit.", "Password Error", JOptionPane.ERROR_MESSAGE);
+            java.util.Arrays.fill(passwordChars, '0');
+            return;
+        }
+        // Password complexity: At least one special character
+        if (!passwordText.matches(".*[^a-zA-Z0-9].*")) { // Matches anything not a letter or digit
+            JOptionPane.showMessageDialog(this, "Password must contain at least one special character (e.g., @#$%^&+=).", "Password Error", JOptionPane.ERROR_MESSAGE);
+            java.util.Arrays.fill(passwordChars, '0');
+            return;
+        }
 
       try {
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
             UserInterface userService = (UserInterface) registry.lookup("user");
 
             User userObj = new User();

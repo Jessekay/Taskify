@@ -6,6 +6,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 import model.Tasks;
 import service.TasksInterface;
+import java.util.Date; // Added import
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -42,13 +43,18 @@ import service.TasksInterface;
     }
 
     @Override
-    public List<Tasks> retrieveAll(Tasks tasks) throws RemoteException {
-    return dao.retreiveAll();
+    public List<Tasks> retrieveAll(int userId) throws RemoteException {
+    return dao.retreiveAll(userId);
     }
 
     @Override
     public Tasks retrieveById(Tasks tasks) throws RemoteException {
        return dao.retrieveById(tasks);
+    }
+
+    @Override
+    public List<Tasks> searchTasks(int userId, String searchTerm, String priority, Date dueDate, String tagName) throws RemoteException {
+        return dao.searchTasks(userId, searchTerm, priority, dueDate, tagName);
     }
     
 }

@@ -2,6 +2,8 @@ package model;
 
 import java.io.Serializable;
 import java.util.Date;
+import model.User; // Added import
+import model.Category; // Added import
 
 /**
  *
@@ -12,32 +14,32 @@ public class Tasks implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private int id;
-    private String name;
+    // private String name; // Removed
     private String description;
-    private int user_id;
+    // private int user_id; // Removed
     private String title;
-    private Date due_date;
-    private boolean is_completed;
+    private Date due_date; // Kept as java.util.Date
+    // private boolean is_completed; // Removed
     private String priority;
-    private int category_id;
+    // private int category_id; // Removed
+
+    private User user; // Added field
+    private Category category; // Added field
     
     public Tasks() {}
 
-    public Tasks(int id, String name, String description, String color, int user_id, String title, Date due_date, boolean is_completed, String priority, int category_id) {
+    // Updated constructor
+    public Tasks(int id, String description, String title, Date due_date, String priority, User user, Category category) {
         this.id = id;
-        this.name = name;
         this.description = description;
-        this.user_id = user_id;
         this.title = title;
         this.due_date = due_date;
-        this.is_completed = is_completed;
         this.priority = priority;
-        this.category_id = category_id;
+        this.user = user;
+        this.category = category;
     }
 
-    public Tasks(int CURRENT_USER_ID) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    // Removed constructor: public Tasks(int CURRENT_USER_ID)
 
     public int getId() {
         return id;
@@ -47,13 +49,7 @@ public class Tasks implements Serializable {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+    // Removed getName() and setName()
 
     public String getDescription() {
         return description;
@@ -63,13 +59,7 @@ public class Tasks implements Serializable {
         this.description = description;
     }
 
-    public int getUser_id() {
-        return user_id;
-    }
-
-    public void setUser_id(int user_id) {
-        this.user_id = user_id;
-    }
+    // Removed getUser_id() and setUser_id()
 
     public String getTitle() {
         return title;
@@ -87,13 +77,7 @@ public class Tasks implements Serializable {
         this.due_date = due_date;
     }
 
-    public Boolean getIs_completed() {
-        return is_completed;
-    }
-
-    public void setIs_completed(Boolean is_completed) {
-        this.is_completed = is_completed;
-    }
+    // Removed getIs_completed() and setIs_completed()
 
     public String getPriority() {
         return priority;
@@ -103,11 +87,23 @@ public class Tasks implements Serializable {
         this.priority = priority;
     }
 
-    public int getCategory_id() {
-        return category_id;
+    // Removed getCategory_id() and setCategory_id()
+
+    // Added getters and setters for user
+    public User getUser() {
+        return user;
     }
 
-    public void setCategory_id(int category_id) {
-        this.category_id = category_id;
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    // Added getters and setters for category
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }

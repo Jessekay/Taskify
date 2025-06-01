@@ -41,8 +41,8 @@ public class CategoryImpl extends UnicastRemoteObject implements CategoryInterfa
     }
 
     @Override
-    public List<Category> retrieveAll(Category category) throws RemoteException {
-    return dao.retreiveAll();
+    public List<Category> retrieveAll(int userId) throws RemoteException {
+    return dao.retreiveAll(userId);
     }
 
     @Override

@@ -71,10 +71,11 @@ public class CategoryDao {
         return null;
     }
    
-   public List<Category> retreiveAll(){
+   public List<Category> retreiveAll(int userId){
         Session ss= HibernateUtil.getSessionFactory().openSession();
-        List<Category> categoryList=ss.createQuery("select cat from"
-                + " Category cas").list();
+        List<Category> categoryList=ss.createQuery("select cat from Category cat where cat.user.id = :userId")
+                                      .setParameter("userId", userId)
+                                      .list();
         ss.close();
         return categoryList;
     }

@@ -25,7 +25,7 @@ public interface CategoryInterface extends Remote{
     public String registerCategory(Category category) throws RemoteException;
     public String updateCategory(Category category) throws RemoteException;
     public String deleteCategory(Category category) throws RemoteException;
-    public List<Category> retrieveAll(Category category) throws RemoteException;
+    public List<Category> retrieveAll(int userId) throws RemoteException;
     public Category retrieveById(Category category) throws RemoteException;
     
 }

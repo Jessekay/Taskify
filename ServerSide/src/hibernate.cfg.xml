@@ -51,5 +51,7 @@ Contributor(s):
     <mapping class="model.Category"/>
     <mapping class="model.Tasks"/>
     <mapping class="model.User"/>
+    <mapping class="model.UserProfile"/>
+    <mapping class="model.Tag"/>
   </session-factory>
 </hibernate-configuration>
