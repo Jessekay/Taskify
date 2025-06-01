@@ -25,10 +25,21 @@ public class UserCategories extends javax.swing.JFrame {
      * Creates new form UserCategories
      */
     public UserCategories() {
-        initComponents();
-        loadCategories(); // Load categories after UI initialization
-        // Enable add on Enter key press
-        categoryName.addKeyListener(new java.awt.event.KeyAdapter() {
+        if (utils.Session.CURRENT_USER == null || utils.Session.CURRENT_USER_ID <= 0) {
+            JOptionPane.showMessageDialog(null, "No active session. Please sign in.", "Session Error", JOptionPane.ERROR_MESSAGE);
+
+            java.awt.EventQueue.invokeLater(() -> {
+                new Signin().setVisible(true);
+                if (this.isDisplayable()) {
+                    this.dispose();
+                }
+            });
+            return;
+        } else {
+            initComponents();
+            loadCategories(); // Load categories after UI initialization
+            // Enable add on Enter key press
+            categoryName.addKeyListener(new java.awt.event.KeyAdapter() {
             @Override
             public void keyPressed(java.awt.event.KeyEvent evt) {
                 if (evt.getKeyCode() == java.awt.event.KeyEvent.VK_ENTER) {

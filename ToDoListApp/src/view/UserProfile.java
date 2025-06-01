@@ -30,9 +30,20 @@ public class UserProfile extends javax.swing.JFrame {
      * Creates new form UserProfile
      */
     public UserProfile() {
-        initComponents();
-        
-        initializeUserData();
+        if (utils.Session.CURRENT_USER == null || utils.Session.CURRENT_USER_ID <= 0) {
+            JOptionPane.showMessageDialog(null, "No active session. Please sign in.", "Session Error", JOptionPane.ERROR_MESSAGE);
+
+            java.awt.EventQueue.invokeLater(() -> {
+                new Signin().setVisible(true);
+                if (this.isDisplayable()) {
+                    this.dispose();
+                }
+            });
+            return;
+        } else {
+            initComponents();
+            initializeUserData();
+        }
     }
     
     

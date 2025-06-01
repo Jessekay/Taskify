@@ -30,7 +30,26 @@ public class Dashboard extends javax.swing.JFrame {
      * Creates new form Dashboard
      */
     public Dashboard() {
-        initComponents();
+        if (Session.CURRENT_USER == null || Session.CURRENT_USER_ID <= 0) {
+            JOptionPane.showMessageDialog(null, "No active session. Please sign in.", "Session Error", JOptionPane.ERROR_MESSAGE);
+
+            java.awt.EventQueue.invokeLater(() -> {
+                new Signin().setVisible(true);
+                // Attempt to dispose this frame if it's already been made visible or is being packed.
+                // This is a bit tricky here as dispose() should ideally be called on a fully constructed/visible frame.
+                // If the constructor is interrupted by a return, this might not be necessary,
+                // but as a safeguard if the frame somehow gets shown:
+                if (this.isDisplayable()) {
+                    this.dispose();
+                }
+            });
+            // Prevent further initialization by returning.
+            // Any critical resource allocation should be avoided before this check or handled in a finally block if applicable.
+            return;
+        } else {
+            initComponents();
+            // Any other original constructor code would go here
+        }
     }
 
     /**

@@ -472,8 +472,16 @@ public class AddTask extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Task title is required.");
             return;
         }
+        if (taskTitle.getText().trim().length() > 100) {
+            JOptionPane.showMessageDialog(this, "Task title cannot exceed 100 characters.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         if (description.getText().trim().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Description is required.");
+            return;
+        }
+        if (description.getText().trim().length() > 500) {
+            JOptionPane.showMessageDialog(this, "Task description cannot exceed 500 characters.", "Input Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (taskDueDate.getText().trim().isEmpty()) {
@@ -572,11 +580,25 @@ public class AddTask extends javax.swing.JFrame {
             return;
         }
 
-        if (taskTitle.getText().trim().isEmpty() || description.getText().trim().isEmpty() ||
-            taskDueDate.getText().trim().isEmpty() || !isValidDate(taskDueDate.getText().trim()) ||
-            priority.getText().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "All fields must be filled with valid data.");
+        if (taskTitle.getText().trim().isEmpty()) { // Basic empty check
+            JOptionPane.showMessageDialog(this, "Task title is required.");
             return;
+        }
+        if (taskTitle.getText().trim().length() > 100) {
+            JOptionPane.showMessageDialog(this, "Task title cannot exceed 100 characters.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (description.getText().trim().isEmpty()) { // Basic empty check
+            JOptionPane.showMessageDialog(this, "Description is required.");
+            return;
+        }
+        if (description.getText().trim().length() > 500) {
+            JOptionPane.showMessageDialog(this, "Task description cannot exceed 500 characters.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (taskDueDate.getText().trim().isEmpty() || !isValidDate(taskDueDate.getText().trim()) || priority.getText().trim().isEmpty()) {
+             JOptionPane.showMessageDialog(this, "Due date and priority fields must be filled with valid data.");
+             return;
         }
         String priorityValue = priority.getText().trim().toLowerCase();
         if (!priorityValue.equals("high") && !priorityValue.equals("medium") && !priorityValue.equals("low")) {
@@ -681,6 +703,15 @@ public class AddTask extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Category name cannot be empty.");
                 loadCategoryDropDown();
                 return;
+            }
+
+            // Duplicate category name validation
+            for (Category existingCategory : userCategories) {
+                if (existingCategory.getName().equalsIgnoreCase(name.trim())) {
+                    JOptionPane.showMessageDialog(this, "A category with this name already exists.", "Duplicate Category", JOptionPane.ERROR_MESSAGE);
+                    loadCategoryDropDown(); // Reset dropdown to original state
+                    return;
+                }
             }
 
             String description = JOptionPane.showInputDialog(this, "Enter category description (optional):");

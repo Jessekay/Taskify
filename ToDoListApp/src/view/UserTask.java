@@ -5,6 +5,9 @@
  */
 package view;
 
+import javax.swing.JOptionPane; // Added import
+import utils.Session; // Added import
+
 /**
  *
  * @author kayje
@@ -15,7 +18,20 @@ public class UserTask extends javax.swing.JFrame {
      * Creates new form UserTask
      */
     public UserTask() {
-        initComponents();
+        if (utils.Session.CURRENT_USER == null || utils.Session.CURRENT_USER_ID <= 0) {
+            JOptionPane.showMessageDialog(null, "No active session. Please sign in.", "Session Error", JOptionPane.ERROR_MESSAGE);
+
+            java.awt.EventQueue.invokeLater(() -> {
+                new Signin().setVisible(true);
+                if (this.isDisplayable()) {
+                    this.dispose();
+                }
+            });
+            return;
+        } else {
+            initComponents();
+            // Any other original constructor code would go here
+        }
     }
 
     /**
