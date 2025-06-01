@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/controller/TestConnection.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/model/User.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/dao/UserDao.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/service/CategoryInterface.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/dao/HibernateUtil.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/service/UserInterface.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/controller/Server.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/service/implementation/UserImpl.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/model/Category.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/model/Tasks.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/service/TasksInterface.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/service/implementation/CategoryImpl.java</file>
+            <file>file:/C:/Users/kayje/OneDrive/Documents/NetBeansProjects/ServerSide/src/hibernate.cfg.xml</file>
+        </group>
+    </open-files>
+</project-private>
