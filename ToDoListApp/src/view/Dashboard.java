@@ -189,7 +189,16 @@ public class Dashboard extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void userTasksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userTasksActionPerformed
-       
+        if (Session.CURRENT_USER == null) {
+            JOptionPane.showMessageDialog(this, "No user logged in. Please login first.", "Error", JOptionPane.ERROR_MESSAGE);
+            // Optionally, redirect to Signin screen
+            // new Signin().setVisible(true);
+            // this.dispose();
+            return;
+        }
+        AddTask addTaskView = new AddTask(Session.CURRENT_USER);
+        addTaskView.setVisible(true);
+        this.dispose();
     }//GEN-LAST:event_userTasksActionPerformed
 
     private void taskCategoriesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_taskCategoriesActionPerformed

@@ -335,7 +335,7 @@ public class Signup extends javax.swing.JFrame {
         }
 
       try {
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
             UserInterface userService = (UserInterface) registry.lookup("user");
 
             User userObj = new User();

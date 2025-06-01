@@ -21,6 +21,11 @@ public class Signin extends javax.swing.JFrame {
   private String jdbc = "jdbc:mysql://localhost/to_do_list_app_db";
     private String user = "root";
     private String passwd = "12092001"; 
+
+    // OTP UI Components
+    private javax.swing.JButton otpLoginButton;
+    private javax.swing.JTextField otpField;
+    private javax.swing.JLabel otpLabel;
     /**
      * Creates new form Signin
      */
@@ -65,6 +70,24 @@ public class Signin extends javax.swing.JFrame {
         jButton1 = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
+
+        // Instantiate OTP components
+        otpLoginButton = new javax.swing.JButton("Sign In with OTP");
+        otpField = new javax.swing.JTextField(10); // Set a preferred size
+        otpLabel = new javax.swing.JLabel("Enter OTP:");
+
+        // Initially hide OTP fields
+        otpField.setVisible(false);
+        otpLabel.setVisible(false);
+
+        // Add action listener for otpLoginButton
+        otpLoginButton.addActionListener(evt -> otpLoginButtonActionPerformed(evt));
+
+        // Conceptual layout:
+        // otpLabel and otpField would typically be placed near the email field or below the password field.
+        // otpLoginButton could be placed below the standard signinBtn or alongside it.
+        // Example: jPanel1.add(otpLabel); jPanel1.add(otpField); jPanel1.add(otpLoginButton);
+        // These would need proper constraints/positioning in a real layout manager.
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -254,8 +277,77 @@ public class Signin extends javax.swing.JFrame {
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
         return email.matches(emailRegex);
     }
+
+    private void otpLoginButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        String emailText = email.getText().trim();
+        if (emailText.isEmpty() || !isValidEmail(emailText)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
+            UserInterface userService = (UserInterface) registry.lookup("user");
+
+            String returnedOtpForTesting = userService.requestOtp(emailText);
+
+            if (returnedOtpForTesting == null) {
+                 JOptionPane.showMessageDialog(this, "Failed to request OTP. User may not exist or an error occurred.", "OTP Error", JOptionPane.ERROR_MESSAGE);
+                 return;
+            }
+
+            System.out.println("TESTING: OTP for " + emailText + " is " + returnedOtpForTesting);
+
+            password.setVisible(false);
+            if (jLabel6 != null) jLabel6.setVisible(false); // jLabel6 is label for password
+            otpField.setVisible(true);
+            otpLabel.setVisible(true);
+            signinBtn.setText("Verify OTP & Sign In");
+
+            JOptionPane.showMessageDialog(this, "OTP has been generated (see console for testing).\nPlease enter it below and click 'Verify OTP & Sign In'.", "OTP Sent", JOptionPane.INFORMATION_MESSAGE);
+            otpField.requestFocusInWindow();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error requesting OTP: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
     private void signinBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signinBtnActionPerformed
+
+        if (otpField.isVisible()) { // OTP Login Mode
+            String emailText = email.getText().trim();
+            String otpText = otpField.getText().trim();
+
+            if (emailText.isEmpty() || otpText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Email and OTP cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            try {
+                Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
+                UserInterface userService = (UserInterface) registry.lookup("user");
+                User loggedInUser = userService.loginUserWithOtp(emailText, otpText);
+
+                if (loggedInUser != null) {
+                    Session.CURRENT_USER = loggedInUser;
+                    Session.CURRENT_USER_ID = loggedInUser.getId();
+                    Session.CURRENT_USER_EMAIL = loggedInUser.getEmail(); // Populate session
+                    Session.CURRENT_USER_NAME = loggedInUser.getUsername();
+                    Session.CURRENT_USER_CREATED_AT = loggedInUser.getCreated();
+
+                    new Dashboard().setVisible(true);
+                    this.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Invalid OTP or email.", "Login Failed", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error during OTP Sign In: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+            return;
+        }
      
+    // Existing password login logic starts here
     String emailText = email.getText().trim();
     char[] passwordChars = password.getPassword();
     String passwordText = new String(passwordChars);
@@ -282,7 +374,7 @@ public class Signin extends javax.swing.JFrame {
     }
 
     try {
-        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
         UserInterface userService = (UserInterface) registry.lookup("user");
 
         User loggedInUser = userService.loginUser(emailText, passwordText);

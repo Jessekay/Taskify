@@ -371,7 +371,7 @@ public class UpdateUser extends javax.swing.JFrame {
     }
 
     try {
-        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
         UserInterface userService = (UserInterface) registry.lookup("user");
         
         if (newUsername.getText().isEmpty() || newEmail.getText().isEmpty() || newPasswd.getText().isEmpty() || userId.getText().isEmpty()){
@@ -389,7 +389,7 @@ public class UpdateUser extends javax.swing.JFrame {
         }
         
     } catch (ConnectException e) {
-        JOptionPane.showMessageDialog(this, "Cannot connect to server at 127.0.0.1:1000. Ensure the server is running.");
+        JOptionPane.showMessageDialog(this, "Cannot connect to server at 127.0.0.1:6000. Ensure the server is running.");
         e.printStackTrace();
     } catch (NotBoundException e) {
         JOptionPane.showMessageDialog(this, "Service 'user' not found in RMI registry.");

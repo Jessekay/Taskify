@@ -7,10 +7,13 @@ package dao;
 
 import java.util.List;
 import model.User;
-import org.hibernate.Query;
+// import org.hibernate.Query; // Will be replaced by org.hibernate.query.Query
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.mindrot.jbcrypt.BCrypt;
+import java.util.HashMap; // Added for OTP storage
+import java.util.Map; // Added for OTP storage
+import org.hibernate.query.Query; // For typed queries
 
 /**
  *
@@ -18,6 +21,16 @@ import org.mindrot.jbcrypt.BCrypt;
  */
 
 public class UserDao {
+
+    // OTP Storage
+    private static class OtpData {
+        String otp;
+        long expiryTime;
+        OtpData(String otp, long expiryTime) { this.otp = otp; this.expiryTime = expiryTime; }
+    }
+    private static final Map<String, OtpData> otpStorage = new HashMap<>();
+    private static final long OTP_VALIDITY_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
 public String registerUser(User user){
     try {
         Session ss = HibernateUtil.getSessionFactory().openSession();
@@ -111,6 +124,53 @@ public String registerUser(User user){
         } finally {
             if (ss != null) ss.close();
         }
+    }
+
+    public User getUserByEmail(String email) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<User> query = session.createQuery("FROM User WHERE email = :email", User.class);
+            query.setParameter("email", email);
+            return query.uniqueResult();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String generateAndStoreOtp(String email) {
+        // Check if user exists
+        User user = getUserByEmail(email);
+        if (user == null) {
+            System.out.println("OTP generation failed: User not found for email " + email);
+            return null;
+        }
+
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        long expiryTime = System.currentTimeMillis() + OTP_VALIDITY_DURATION_MS;
+        otpStorage.put(email, new OtpData(otp, expiryTime));
+        System.out.println("Generated OTP for " + email + ": " + otp); // For testing
+        // In a real app, you would email the OTP to the user here, not return it directly.
+        return otp;
+    }
+
+    public boolean verifyOtp(String email, String otp) {
+        OtpData storedOtpData = otpStorage.get(email);
+        if (storedOtpData == null) {
+            System.out.println("OTP verification failed: No OTP found for email " + email);
+            return false; // No OTP requested or already used/expired
+        }
+        if (System.currentTimeMillis() > storedOtpData.expiryTime) {
+            otpStorage.remove(email); // OTP expired
+            System.out.println("OTP verification failed: OTP expired for email " + email);
+            return false;
+        }
+        if (storedOtpData.otp.equals(otp)) {
+            otpStorage.remove(email); // OTP successfully verified, remove it
+            System.out.println("OTP verification successful for email " + email);
+            return true;
+        }
+        System.out.println("OTP verification failed: Invalid OTP for email " + email);
+        return false; // Invalid OTP
     }
 }
        

@@ -3,8 +3,14 @@ package model;
 //import jakarta.persistence.*;
 import java.io.Serializable;
 import java.sql.Date;
+import java.util.Set; // Added import
+import java.util.HashSet; // Added import
+import javax.persistence.CascadeType; // Added import
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn; // Added import for consistency, though already used by ManyToOne
+import javax.persistence.JoinTable; // Added import
+import javax.persistence.ManyToMany; // Added import
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -38,6 +44,14 @@ private static final long serialVersionUID = 1L;
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+    @JoinTable(
+        name = "task_tags",
+        joinColumns = @JoinColumn(name = "task_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> tags = new HashSet<>();
 
     // Getters and setters
 
@@ -109,6 +123,25 @@ private static final long serialVersionUID = 1L;
 
     public void setCategory(Category category) {
         this.category = category;
+    }
+
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
+    }
+
+    // Helper methods to add/remove tags
+    public void addTag(Tag tag) {
+        this.tags.add(tag);
+        tag.getTasks().add(this);
+    }
+
+    public void removeTag(Tag tag) {
+        this.tags.remove(tag);
+        tag.getTasks().remove(this);
     }
     
 }

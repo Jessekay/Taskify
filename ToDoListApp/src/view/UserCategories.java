@@ -61,7 +61,7 @@ public class UserCategories extends javax.swing.JFrame {
 
     private void loadCategories() {
         try {
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1000);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
             CategoryInterface categoryService = (CategoryInterface) registry.lookup("category");
             Category filter = new Category();
             filter.setUser_id(utils.Session.CURRENT_USER_ID);
@@ -328,7 +328,7 @@ public class UserCategories extends javax.swing.JFrame {
     }
 
     try {
-        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
         CategoryInterface categoryService = (CategoryInterface) registry.lookup("category");
 
         Category categoryObj = new Category();
@@ -347,7 +347,7 @@ public class UserCategories extends javax.swing.JFrame {
         }
     } catch (java.rmi.ConnectException e) {
         JOptionPane.showMessageDialog(this, 
-            "Cannot connect to the server. Please ensure the server is running on port 1001.",
+            "Cannot connect to the server. Please ensure the server is running on port 6000.",
             "Connection Error", 
             JOptionPane.ERROR_MESSAGE);
     } catch (Exception e) {
@@ -388,7 +388,7 @@ public class UserCategories extends javax.swing.JFrame {
         }
 
         try {
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1000);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
             CategoryInterface categoryService = (CategoryInterface) registry.lookup("category");
 
             Category categoryObj = new Category();
@@ -427,7 +427,7 @@ public class UserCategories extends javax.swing.JFrame {
         int categoryId = (int) categoryTable.getValueAt(selectedRow, 0);
 
         try {
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1000);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
             CategoryInterface categoryService = (CategoryInterface) registry.lookup("category");
 
             Category categoryObj = new Category();

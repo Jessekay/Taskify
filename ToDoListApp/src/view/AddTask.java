@@ -22,6 +22,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import service.CategoryInterface;
 import service.TasksInterface;
+import javax.swing.JButton; // Added import
+import javax.swing.JFileChooser; // Added import
+import java.io.File; // Added import
+import java.io.FileWriter; // Added import
+import java.io.IOException; // Added import
+// import java.text.SimpleDateFormat; // Already present
+// import java.util.List; // Already present
+// import java.util.stream.Collectors; // For formatting tags - Not needed for simplified approach
+// import model.Tag; // Not needed for simplified approach
 
 /**
  * AddTask JFrame for managing user tasks.
@@ -30,6 +39,16 @@ public class AddTask extends javax.swing.JFrame {
     private List<Category> userCategories = new ArrayList<>();
     private User loggedInUser;
 
+    // Search UI components
+    private javax.swing.JTextField searchTitleDescField;
+    private javax.swing.JComboBox<String> searchPriorityComboBox;
+    private javax.swing.JTextField searchDueDateField;
+    private javax.swing.JTextField searchTagField;
+    private javax.swing.JButton searchButton;
+    private javax.swing.JButton clearSearchButton;
+    private javax.swing.JButton exportTasksCsvButton; // Added export button field
+    // private javax.swing.JPanel searchPanel; // Conceptually, for layout
+
     /**
      * Constructor with logged-in user.
      * @param user The currently logged-in user.
@@ -37,6 +56,42 @@ public class AddTask extends javax.swing.JFrame {
     
     
     public AddTask() {
+            // This constructor should ideally not be used directly without a user context.
+            // It's called by the old main method.
+            // If Session.CURRENT_USER is somehow populated, it might partially work,
+            // but it's better to rely on AddTask(User user).
+
+            if (Session.CURRENT_USER == null || Session.CURRENT_USER_ID <= 0) {
+                initComponents(); // Initialize components to show JOptionPane correctly
+                JOptionPane.showMessageDialog(this, "Invalid session or no user logged in. Please sign in.", "Error", JOptionPane.ERROR_MESSAGE);
+                // Attempt to close this window and open Signin
+                // This sequence ensures this frame is properly disposed before Signin appears.
+                java.awt.EventQueue.invokeLater(() -> {
+                    new Signin().setVisible(true);
+                    dispose();
+                });
+                // Return immediately to prevent further initialization if user is not valid
+                return;
+            }
+            // If by some chance CURRENT_USER is valid, proceed with the user-specific constructor logic.
+            // This is a fallback, the AddTask(User user) constructor is preferred.
+            this.loggedInUser = Session.CURRENT_USER;
+            initComponents();
+            loadCategoryDropDown();
+            try {
+                loadTasksFromSession();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Failed to load tasks: " + e.getMessage());
+                e.printStackTrace();
+                // Consider closing or redirecting on critical failure
+                 java.awt.EventQueue.invokeLater(() -> {
+                    new Signin().setVisible(true);
+                    dispose();
+                });
+                return;
+            }
+            userId.setText(String.valueOf(Session.CURRENT_USER_ID));
+            userId.setEditable(false);
     }
 
     public AddTask(User user) {
@@ -72,12 +127,10 @@ public class AddTask extends javax.swing.JFrame {
     private void loadCategoryDropDown() {
         categoryDropDown.removeAllItems();
     try {
-        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
         CategoryInterface categoryService = (CategoryInterface) registry.lookup("category");
 
-        Category categoryFilter = new Category();
-        categoryFilter.setUser_id(Session.CURRENT_USER_ID);
-        userCategories = categoryService.retrieveAll(categoryFilter);
+        userCategories = categoryService.retrieveAll(Session.CURRENT_USER_ID);
 
         for (Category category : userCategories) {
             categoryDropDown.addItem(category.getName());
@@ -96,33 +149,43 @@ public class AddTask extends javax.swing.JFrame {
      */
     private void loadTasksFromSession() {
         try {
-        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+        Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
         TasksInterface tasksService = (TasksInterface) registry.lookup("tasks");
 
-        Tasks taskFilter = new Tasks();
-        taskFilter.setUser_id(Session.CURRENT_USER_ID);
-        List<Tasks> tasks = tasksService.retrieveAll(taskFilter);
+        List<Tasks> tasks = tasksService.retrieveAll(Session.CURRENT_USER_ID);
+        populateTaskTable(tasks); // Call new method to populate table
 
-        DefaultTableModel model = (DefaultTableModel) tasktable.getModel();
-        model.setRowCount(0);
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        for (Tasks task : tasks) {
-            model.addRow(new Object[]{
-                task.getId(),
-                task.getTitle(),
-                task.getDescription(),
-                task.getDue_date() != null ? dateFormat.format(task.getDue_date()) : "",
-                task.getPriority(),
-                task.getUser_id(),
-                task.getCategory_id()
-            });
-        }
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this, "Failed to load tasks: " + e.getMessage());
         e.printStackTrace();
         // Allow the form to remain open
     }
+    }
+
+    private void populateTaskTable(List<Tasks> tasks) {
+        DefaultTableModel model = (DefaultTableModel) tasktable.getModel();
+        model.setRowCount(0); // Clear existing rows
+
+        if (tasks == null) {
+            // This can happen if the service returns null due to an error
+            JOptionPane.showMessageDialog(this, "Failed to retrieve tasks or no tasks found.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        for (Tasks task : tasks) {
+            Object[] row = new Object[]{
+                task.getId(),
+                task.getTitle(),
+                task.getDescription(),
+                task.getDue_date() != null ? dateFormat.format(task.getDue_date()) : "",
+                task.getPriority(),
+                (task.getUser() != null ? task.getUser().getId() : null),
+                (task.getCategory() != null ? task.getCategory().getId() : null)
+                // Consider adding a column for Tags if desired, e.g., task.getTags().stream().map(Tag::getName).collect(Collectors.joining(", "))
+            };
+            model.addRow(row);
+        }
     }
 
     /**
@@ -152,6 +215,37 @@ public class AddTask extends javax.swing.JFrame {
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
         home = new javax.swing.JButton();
+
+        // Instantiate search components
+        searchTitleDescField = new javax.swing.JTextField(20);
+        searchPriorityComboBox = new javax.swing.JComboBox<>(new String[]{"Any", "High", "Medium", "Low"});
+        searchDueDateField = new javax.swing.JTextField(10);
+        searchTagField = new javax.swing.JTextField(10);
+        searchButton = new javax.swing.JButton("Search");
+        clearSearchButton = new javax.swing.JButton("Clear Search");
+
+        // Listeners for search buttons
+        searchButton.addActionListener(evt -> searchButtonActionPerformed(evt));
+        clearSearchButton.addActionListener(evt -> clearSearchButtonActionPerformed(evt));
+
+        exportTasksCsvButton = new javax.swing.JButton("Export to CSV");
+        exportTasksCsvButton.addActionListener(evt -> exportTasksCsvButtonActionPerformed(evt));
+
+        // Conceptual: Add these components to a searchPanel, then add searchPanel to the main layout.
+        // exportTasksCsvButton could be placed near other action buttons or below the table.
+        // For example:
+        // searchPanel = new javax.swing.JPanel(new java.awt.FlowLayout()); // or other layout
+        // searchPanel.add(new javax.swing.JLabel("Title/Desc:"));
+        // searchPanel.add(searchTitleDescField);
+        // searchPanel.add(new javax.swing.JLabel("Priority:"));
+        // searchPanel.add(searchPriorityComboBox);
+        // searchPanel.add(new javax.swing.JLabel("Due Date (YYYY-MM-DD):"));
+        // searchPanel.add(searchDueDateField);
+        // searchPanel.add(new javax.swing.JLabel("Tag:"));
+        // searchPanel.add(searchTagField);
+        // searchPanel.add(searchButton);
+        // searchPanel.add(clearSearchButton);
+        // Then add searchPanel to this.jPanel1 or another suitable container in the main form layout.
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -397,32 +491,32 @@ public class AddTask extends javax.swing.JFrame {
         }
 
         try {
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
             TasksInterface tasksService = (TasksInterface) registry.lookup("tasks");
 
             Tasks taskObj = new Tasks();
             taskObj.setTitle(taskTitle.getText().trim());
-            taskObj.setName(taskTitle.getText().trim()); // Set name same as title
+            // taskObj.setName(taskTitle.getText().trim()); // Removed
             taskObj.setDescription(description.getText().trim());
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             taskObj.setDue_date(dateFormat.parse(taskDueDate.getText().trim()));
             taskObj.setPriority(priorityValue);
-            taskObj.setUser_id(Session.CURRENT_USER_ID);
-            taskObj.setIs_completed(false); // Default to not completed
+            taskObj.setUser(Session.CURRENT_USER); // Changed to set User object
+            // taskObj.setIs_completed(false); // Removed
 
-            String selectedCategory = (String) categoryDropDown.getSelectedItem();
-            int categoryId = -1;
+            String selectedCategoryName = (String) categoryDropDown.getSelectedItem();
+            Category foundCategory = null;
             for (Category category : userCategories) {
-                if (category.getName().equals(selectedCategory)) {
-                    categoryId = category.getId();
+                if (category.getName().equals(selectedCategoryName)) {
+                    foundCategory = category;
                     break;
                 }
             }
-            if (categoryId == -1) {
-                JOptionPane.showMessageDialog(this, "Selected category not found.");
+            if (foundCategory == null) {
+                JOptionPane.showMessageDialog(this, "Selected category not found object.");
                 return;
             }
-            taskObj.setCategory_id(categoryId);
+            taskObj.setCategory(foundCategory); // Changed to set Category object
 
             String result = tasksService.registerTasks(taskObj);
             JOptionPane.showMessageDialog(this, result);
@@ -491,34 +585,34 @@ public class AddTask extends javax.swing.JFrame {
         }
 
         try {
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
             TasksInterface tasksService = (TasksInterface) registry.lookup("tasks");
 
             DefaultTableModel model = (DefaultTableModel) tasktable.getModel();
             Tasks task = new Tasks();
             task.setId(Integer.parseInt(model.getValueAt(selectedRow, 0).toString()));
             task.setTitle(taskTitle.getText().trim());
-            task.setName(taskTitle.getText().trim()); // Set name same as title
+            // task.setName(taskTitle.getText().trim()); // Removed
             task.setDescription(description.getText().trim());
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             task.setDue_date(dateFormat.parse(taskDueDate.getText().trim()));
             task.setPriority(priorityValue);
-            task.setUser_id(Integer.parseInt(userId.getText().trim()));
-            task.setIs_completed(false); // Maintain current completion status or fetch from DB
+            task.setUser(Session.CURRENT_USER); // Changed to set User object, assuming userId text field is for display
+            // task.setIs_completed(false); // Removed
 
-            String selectedCategory = (String) categoryDropDown.getSelectedItem();
-            int categoryId = -1;
+            String selectedCategoryName = (String) categoryDropDown.getSelectedItem();
+            Category foundCategory = null;
             for (Category category : userCategories) {
-                if (category.getName().equals(selectedCategory)) {
-                    categoryId = category.getId();
+                if (category.getName().equals(selectedCategoryName)) {
+                    foundCategory = category;
                     break;
                 }
             }
-            if (categoryId == -1) {
-                JOptionPane.showMessageDialog(this, "Selected category not found.");
+            if (foundCategory == null) {
+                JOptionPane.showMessageDialog(this, "Selected category not found object.");
                 return;
             }
-            task.setCategory_id(categoryId);
+            task.setCategory(foundCategory); // Changed to set Category object
 
             String result = tasksService.updateTasks(task);
             JOptionPane.showMessageDialog(this, result);
@@ -537,13 +631,26 @@ public class AddTask extends javax.swing.JFrame {
         }
 
         try {
-            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
             TasksInterface tasksService = (TasksInterface) registry.lookup("tasks");
 
             DefaultTableModel model = (DefaultTableModel) tasktable.getModel();
             Tasks task = new Tasks();
             task.setId(Integer.parseInt(model.getValueAt(selectedRow, 0).toString()));
-            task.setUser_id(Session.CURRENT_USER_ID);
+            // task.setUser_id(Session.CURRENT_USER_ID); // This line was using an old field
+            // For delete, the service likely just needs the ID, but if it needs the user object:
+            // task.setUser(Session.CURRENT_USER);
+            // However, the deleteTasks method in TasksInterface likely still expects a Tasks object
+            // that might only need the ID and potentially the user_id if server-side logic requires it for authorization.
+            // The original code set user_id, which is now removed from the Tasks model.
+            // This indicates a potential mismatch or that deleteTasks might only need task.id.
+            // For now, I will assume deleteTasks on the service side was also updated or can handle
+            // a task object where only ID is set. If it needs the user, Session.CURRENT_USER should be set.
+            // Let's check the interface for deleteTasks - it takes Tasks object.
+            // The server-side TasksDao.deleteTasks takes a Tasks object and uses its ID.
+            // So, just setting the ID is sufficient.
+            // The line task.setUser_id(Session.CURRENT_USER_ID) was attempting to set a field that no longer exists.
+            // We'll keep it minimal, just setting the ID.
 
             String result = tasksService.deleteTasks(task);
             JOptionPane.showMessageDialog(this, result);
@@ -582,7 +689,7 @@ public class AddTask extends javax.swing.JFrame {
             }
 
             try {
-                Registry registry = LocateRegistry.getRegistry("127.0.0.1", 1001);
+                Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000);
                 CategoryInterface categoryService = (CategoryInterface) registry.lookup("category");
 
                 Category category = new Category();
@@ -604,36 +711,110 @@ public class AddTask extends javax.swing.JFrame {
     
     
     
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Dashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Dashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Dashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Dashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new AddTask().setVisible(true);
+
+    private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        String titleDescTerm = searchTitleDescField.getText().trim();
+        String priority = (String) searchPriorityComboBox.getSelectedItem();
+        if ("Any".equals(priority)) {
+            priority = null; // Pass null if "Any" is selected
+        }
+        String dueDateStr = searchDueDateField.getText().trim();
+        String tagName = searchTagField.getText().trim();
+
+        java.util.Date dueDate = null;
+        if (!dueDateStr.isEmpty()) {
+            try {
+                // Ensure this date format matches what your search expects or add more robust parsing
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                dateFormat.setLenient(false);
+                dueDate = dateFormat.parse(dueDateStr);
+            } catch (java.text.ParseException e) {
+                JOptionPane.showMessageDialog(this, "Invalid Due Date format. Please use YYYY-MM-DD.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-        });
+        }
+
+        try {
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000); // Port from prev fix
+            TasksInterface tasksService = (TasksInterface) registry.lookup("tasks");
+            List<Tasks> searchResult = tasksService.searchTasks(Session.CURRENT_USER_ID, titleDescTerm, priority, dueDate, tagName);
+            populateTaskTable(searchResult);
+            if (searchResult.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No tasks found matching your criteria.", "Search Results", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error performing search: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void clearSearchButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        searchTitleDescField.setText("");
+        searchPriorityComboBox.setSelectedIndex(0); // Assuming "Any" is the first item
+        searchDueDateField.setText("");
+        searchTagField.setText("");
+        loadTasksFromSession(); // Reload all tasks
+    }
+
+    private String escapeCsv(String data) {
+        if (data == null) return "";
+        // Basic escaping for quotes. A real CSV library would be more robust.
+        // This also assumes fields will be quoted in the CSV string construction.
+        return data.replace("\"", "\"\"");
+    }
+
+    private void exportTasksCsvButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        // 1. Fetch fresh task data for the report
+        List<Tasks> tasksToExport;
+        try {
+            Registry registry = LocateRegistry.getRegistry("127.0.0.1", 6000); // Ensure port is correct
+            TasksInterface tasksService = (TasksInterface) registry.lookup("tasks");
+            tasksToExport = tasksService.retrieveAll(Session.CURRENT_USER_ID);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error fetching tasks for export: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            return;
+        }
+
+        if (tasksToExport == null || tasksToExport.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No tasks available to export.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        // 2. Use JFileChooser to get save location
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Tasks CSV");
+        fileChooser.setSelectedFile(new File("tasks_report.csv")); // Default filename
+        int userSelection = fileChooser.showSaveDialog(this);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            if (!fileToSave.getName().toLowerCase().endsWith(".csv")) {
+                fileToSave = new File(fileToSave.getParentFile(), fileToSave.getName() + ".csv");
+            }
+
+            // 3. Generate CSV content and write to file
+            try (FileWriter csvWriter = new FileWriter(fileToSave)) {
+                // CSV Header (Simplified: No Tags)
+                csvWriter.append("ID,Title,Description,Due Date,Priority,Category\n");
+
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+                for (Tasks task : tasksToExport) {
+                    csvWriter.append(String.valueOf(task.getId())).append(",");
+                    csvWriter.append("\"").append(escapeCsv(task.getTitle())).append("\",");
+                    csvWriter.append("\"").append(escapeCsv(task.getDescription())).append("\",");
+                    csvWriter.append(task.getDue_date() != null ? dateFormat.format(task.getDue_date()) : "").append(",");
+                    csvWriter.append("\"").append(escapeCsv(task.getPriority())).append("\",");
+                    csvWriter.append("\"").append(task.getCategory() != null ? escapeCsv(task.getCategory().getName()) : "").append("\"\n");
+                }
+                JOptionPane.showMessageDialog(this, "Tasks exported successfully to " + fileToSave.getAbsolutePath(), "Export Successful", JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error writing CSV file: " + e.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
     }
  
 

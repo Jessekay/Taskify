@@ -19,6 +19,7 @@ import service.UserInterface;
 
 
 public class UserImpl extends UnicastRemoteObject implements UserInterface{
+    // public UserDao dao = new UserDao(); // Ensure dao is initialized, if not already
     public UserImpl() throws RemoteException{
         super();
         
@@ -54,6 +55,22 @@ public class UserImpl extends UnicastRemoteObject implements UserInterface{
      @Override
     public User loginUser(String email, String password) throws RemoteException {
         return dao.loginUser(email, password);
+    }
+
+    @Override
+    public String requestOtp(String email) throws RemoteException {
+        // In a real scenario, this would trigger an email.
+        // For now, it calls the DAO method which logs and returns the OTP.
+        return dao.generateAndStoreOtp(email);
+    }
+
+    @Override
+    public User loginUserWithOtp(String email, String otp) throws RemoteException {
+        if (dao.verifyOtp(email, otp)) {
+            // OTP is valid, now retrieve the user (without password check)
+            return dao.getUserByEmail(email);
+        }
+        return null; // OTP verification failed
     }
    
    }

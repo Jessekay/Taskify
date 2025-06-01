@@ -28,5 +28,7 @@ public interface UserInterface extends Remote{
     public List<User> retrieveAll(User user) throws RemoteException;
     public User retrieveById(User user) throws RemoteException;
     User loginUser(String email, String password) throws RemoteException;
+    String requestOtp(String email) throws RemoteException;
+    User loginUserWithOtp(String email, String otp) throws RemoteException;
     
 }
